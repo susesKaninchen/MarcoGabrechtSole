@@ -1,0 +1,719 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+	<meta charset="utf-8" />
+	<title>Gesture Control </title>
+	<meta name="viewport" content="user-scalable=no">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+
+<style>
+.buttonSpace {
+	background: #f2f4f8;
+	font-family: "Open Sans";
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-gap: 1rem;
+}
+
+@media screen and (max-width: 400){
+    .buttonSpace{
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.yellow {
+  --bg-color: #ffd861;
+  --bg-color-light: #ffeeba;
+  --text-color-hover: #4C5656;
+  --box-shadow-color: rgba(255, 215, 97, 0.48);
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 14px 26px rgba(0,0,0,0.04);
+  transition: all 0.3s ease-out;
+  text-decoration: none;
+  object-fit: cover;
+  position: relative;
+}
+
+.card:active {
+  transform: scale(1) translateZ(0);
+  box-shadow: 0 15px 24px rgba(0,0,0,0.11),
+    0 15px 24px var(--box-shadow-color);
+}
+
+.card p {
+  font-size: 17px;
+  color: #4C5656;
+  z-index: 1000;
+  transition: color 0.3s ease-out;
+}
+
+.card:active .overlay {
+  transform: scale(4) translateZ(0);
+}
+
+.overlay {
+  width: 240px;
+  position: absolute; 
+  height: 118px;
+  border-radius: 10px;
+  background: var(--bg-color);
+  z-index: 0;
+  transition: transform 0.3s ease-out;
+}
+	
+.slidecontainer {text-align: center !important; }
+
+.slider {
+  -webkit-appearance: none;
+  width: 90%;
+  height: 25px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+.btn {
+  position: relative;
+  display: block;
+  margin: 20px 20px;
+  padding: 0;
+  overflow: hidden;
+  border-width: 0;
+  outline: none;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+  background-color: #2ecc71;
+  color: #ecf0f1;
+  transition: background-color .3s;
+}
+
+.btn:active {
+  background-color: #27ae60;
+}
+
+.btn > * {
+  position: relative;
+}
+
+.btn p {
+	text-align: center;
+  display: block;
+  padding: 20px 24px;
+}
+
+.btn:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 0;
+  padding-top: 0;
+  border-radius: 100%;
+  background-color: rgba(236, 240, 241, .3);
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.btn:active:before {
+  width: 120%;
+  padding-top: 120%;
+  transition: width .2s ease-out, padding-top .2s ease-out;
+}
+/* Styles, not important */
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+
+.close {
+  width: 25px;
+  height: 25px;
+  opacity: 0.3;
+}
+.close:hover {
+  opacity: 1;
+}
+.close:before, .close:after {
+  position: absolute;
+  left: 12px;
+  content: ' ';
+  height: 25px;
+  width: 2px;
+  background-color: #333;
+}
+.close:before {
+  transform: rotate(45deg);
+}
+.close:after {
+  transform: rotate(-45deg);
+}
+
+
+.btn-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: hsl(216, 100, 50);
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+#joyText {z-index: 2;position: absolute;top: 0px;pointer-events: none;}
+
+body {
+    touch-action: none;
+	overscroll - behavior: contain;
+	overflow-y: hidden
+}
+</style>
+
+</head>
+
+<body>
+<div id="wsText">
+	<p>Websocket verbindet</p>
+</div>
+<div id="eventText">
+	<p>Events verbinden</p>
+</div>
+<div class="buttonSpace" id="buttonSpace">
+	<div class="card yellow" id="i0">
+		<button class="btn" type="button" id="-1" onclick="buttonPress(this.id)">
+			<p>UPDATE</p>
+		</button>
+		<button type="button" class="btn-close" onclick="closePress(this.parentNode.id.substring(1))"><span class="close"></span></button>
+	</div>
+	
+</div>
+	<script src="/chart.js"></script>
+	<script src="/jquery-3.6.0.min.js"></script>
+	
+	<script>
+	var strCloseBtn = '<button type="button" class="btn-close" onclick="closePress(this.parentNode.id.substring(1))"><span class="close"></span></button>';
+	var gateway = `ws://${window.location.hostname}/ws`;
+	var websocket;
+  
+	window.addEventListener('load', onLoad);
+	function onLoad(event) {
+		//moves.innerHTML = 'Verbinde';
+		initWebSocket();
+		initEventSource();
+	}
+	var buttonSpace = document.getElementById('buttonSpace');
+	var wsSpace = document.getElementById('wsText');
+	var eventSpace = document.getElementById('eventText');
+	var lasSend = Date.now();
+	var reconnecct = true;
+	var notSend = false;
+	var sendValue = {};
+	var intervallSend = 200; //ms
+	var isWSConnected = false;
+	
+	var myFunction = function() {
+		sendLast();
+		setTimeout(myFunction, intervallSend);
+	}
+	setTimeout(myFunction, intervallSend);
+	
+	function initEventSource() {
+		if (!!window.EventSource) {
+		  var source = new EventSource('/events');
+
+		  source.addEventListener('open', function(e) {
+			console.log("Events Connected");
+			eventSpace.innerHTML = "";
+		  }, false);
+
+		  source.addEventListener('error', function(e) {
+			if (e.target.readyState != EventSource.OPEN) {
+				eventSpace.innerHTML = "<p>Events verbindet</p>";
+			  console.log("Events Disconnected");
+			}
+		  }, false);
+
+		  source.addEventListener('message', function(e) {
+			//console.log("message", e.data);
+			parseEvent(e.data);
+		  }, false);
+		}
+	}
+
+	function sendValues(x) {
+		//console.log(x);
+		x = JSON.parse(x);
+		if (lasSend + intervallSend < Date.now()) {
+			notSend = false;
+			console.log(x);
+			websocket.send(JSON.stringify(x));
+			lasSend = Date.now();
+			sendValue = {};
+			
+		}else {
+			var ke = Object.keys(x);
+			for (var iKey in Object.keys(x)){
+				//	console.log(ke[iKey]);
+				//	console.log(x[ke[iKey]]);
+				notSend = true;
+				sendValue[ke[iKey]] = x[ke[iKey]];
+			}
+		}
+	}
+	
+	function sendLast() {
+		if (notSend && lasSend + intervallSend < Date.now() && sendValue != {}) {
+			notSend = false;
+			console.log(JSON.stringify(sendValue));
+			websocket.send(JSON.stringify(sendValue));
+			lasSend = Date.now();
+			sendValue = {};
+		}
+	}
+
+	function buttonPress(id) {
+		//console.log('{"index":"'+id+'", "value":'+id+'}');
+		sendValues('{"' + id + '":{"index":"'+id+'", "value":'+id+'}}');
+		//sendValues({id:{"index":id, "value":id}});
+	}
+	
+	function closePress(id) {
+		//console.log('{"index":"-2", "value":'+id+'}');
+		sendValues('{"' + id + '":{"index":"-2", "value":"'+id+'"}}');
+		//sendValues({id:{"index":-2, "value":id}});
+	}
+	
+	function updateSlider(id, value) {
+		var tempelement = document.getElementById("value" + id);
+		tempelement.innerHTML = value;
+		//console.log('{"type":"slider", "index":"'+id+'", "value":'+value+'}');
+		sendValues('{"' + id + '":{"type":"slider", "index":"'+id+'", "value":'+value+'}}');
+		//sendValues({id:{"type":"slider", "index":id, "value":value}});
+	}
+	
+	function initWebSocket() {
+		console.log('Trying to open a WebSocket connection...');
+		websocket = new WebSocket(gateway);
+		websocket.onopen    = onOpen;
+		websocket.onclose   = onClose;
+		websocket.onmessage = onMessage;
+
+	}
+	
+	function onOpen(event) {
+		wsSpace.innerHTML = "";
+		console.log('Connection open');
+		isWSConnected = true;
+		buttonPress("-1");
+	}
+
+	function onClose(event) {
+		wsSpace.innerHTML = "<p>Websocket verbindet</p>";
+		console.log('Connection closed');
+		setTimeout(initWebSocket, 2000);
+	}
+	
+	function onMessage(event) {//Message vom Websoket
+		// MAche etwas mit Daten vom Bot
+		var content = JSON.parse(event.data);
+		console.log(content);
+	}
+	
+	var stringToHTML = function (str) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(str, 'text/html');
+		//console.log(doc.body)
+        return doc.body.children[0];
+    }; 
+	
+	function parseEvent(event) {//Eventsorces
+		// MAche etwas mit Daten vom Bot
+		var content = JSON.parse(event);
+		//console.log(content);
+		let reinit = false; 
+		var ke = Object.keys(content);
+			for (var iKey in Object.keys(content)){
+				//console.log(ke[iKey]);
+				//console.log(content[ke[iKey]]);
+					var contentElem = JSON.parse(content[ke[iKey]]);
+					var tempelement = document.getElementById("i" + contentElem.i);
+					if (contentElem.ty == 'btn') {
+						if (tempelement == null) {
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><button class="btn" type="button" onclick="buttonPress(this.id)" id="' + contentElem.i + '"><p>' + contentElem.t + '</p></button><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<button class="btn" type="button" onclick="buttonPress(this.id)" id="' + contentElem.i + '"><p>' + contentElem.t + '</p></button><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+						} else if (contentElem.action == 'set') {
+							tempelement.children[0].children[0].innerHTML = contentElem.t;
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+					}else if (contentElem.ty == 'slider') {
+						if (tempelement == null) {
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><p>' + contentElem.t + '</p><input type="range" min="' + contentElem.min + '" max="' + contentElem.max + '" value="' + contentElem.value + '" class="slider" id="' + contentElem.i + '" oninput="updateSlider(this.id, this.value)"><p>Value: <span id="value' + contentElem.i + '">' + contentElem.value + '</span></p><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<p>' + contentElem.t + '</p><input type="range" min="' + contentElem.min + '" max="' + contentElem.max + '" value="' + contentElem.value + '" class="slider" id="' + contentElem.i + '" oninput="updateSlider(this.id, this.value)"><p>Value: <span id="value' + contentElem.i + '">' + contentElem.value + '</span></p><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+						} else if (contentElem.action == 'set') {
+							tempelement.children[0].innerHTML = contentElem.t;
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+					}else if (contentElem.ty == 'card') {
+						if (tempelement == null) {
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><p id="' + contentElem.i + '">' + contentElem.t + '</p><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<p id="' + contentElem.i + '">' + contentElem.t + '</p><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+						} else if (contentElem.action == 'set') {
+							tempelement.children[0].innerHTML = contentElem.t;
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+					}else if (contentElem.ty == 'ta') {
+						if (tempelement == null) {
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><textarea id="' + contentElem.i + '">' + contentElem.t + '</textarea><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<textarea id="' + contentElem.i + '">' + contentElem.t + '</textarea><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+						} else if (contentElem.action == 'set') {
+							tempelement.children[0].innerHTML = contentElem.t;
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+					}else if (contentElem.ty == 'log') {
+						if (tempelement == null) {
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><textarea disabled id="' + contentElem.i + '">' + contentElem.t + '</textarea><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<textarea id="' + contentElem.i + '">' + contentElem.t + '</textarea disabled id="' + contentElem.i + '><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+						} else if (contentElem.action == 'set') {
+							tempelement.children[0].append(contentElem.t + "\r\n");
+							tempelement.children[0].scrollTop = tempelement.children[0].scrollHeight;
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+					}else if (contentElem.ty == 'joy') {
+						if (tempelement == null) {
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><p id="joyText" style="text-align: center;">X: <span id="x_coordinate' + contentElem.i + '"> </span>Y: <span id="y_coordinate' + contentElem.i + '"> </span><br>Speed: <span id="speed' + contentElem.i + '"> </span>%Angle: <span id="angle' + contentElem.i + '"> </span></p><canvas id="canvas' + contentElem.i + '" name="game"></canvas><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<p id="joyText" style="text-align: center;">X: <span id="x_coordinate' + contentElem.i + '"> </span>Y: <span id="y_coordinate' + contentElem.i + '"> </span><br>Speed: <span id="speed' + contentElem.i + '"> </span>%Angle: <span id="angle' + contentElem.i + '"> </span></p><canvas id="canvas' + contentElem.i + '" name="game"></canvas><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+						} else if (contentElem.action = 'set') {
+							tempelement.children[0].children[0].innerHTML == contentElem.t;
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+						var iddd = contentElem.i;
+						initJoystick(iddd);
+					} else if (contentElem.ty == 'graf') {
+						if (tempelement == null) {
+							if (contentElem.action == 'set') {
+								continue;
+							}
+							buttonSpace.append(stringToHTML('<div class="card yellow" id="i' + contentElem.i + '"><canvas id="cChart' + contentElem.i + '"></canvas><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '</div>'));
+							charts[contentElem.i] = new Chart(document.getElementById('cChart' + contentElem.i),configLine);
+							var tempelement = document.getElementById("i" + contentElem.i);
+							reinit = true;
+						}
+						if (contentElem.action == 'draw') {
+							tempelement.innerHTML = '<canvas id="cChart' + contentElem.i + '"></canvas><style>#i' + contentElem.i + ' {grid-column: span ' + contentElem.gc + '; grid-row: span ' + contentElem.gr + ';}</style>' + strCloseBtn + '';
+							charts[contentElem.i] = new Chart(document.getElementById('cChart' + contentElem.i),configLine);
+							addDataChart(charts[contentElem.i], contentElem.t);
+						} else if (contentElem.action == 'set') {
+							addDataChart(charts[contentElem.i], contentElem.t);//contentElem.t)
+						} else if ('setSize') {
+							tempelement.style.gridColumn = 'span ' + contentElem.gc;
+						}
+						//{labels: [1,2,3,4,5,6,7],datasets: [{label: 'Pressure Front',backgroundColor: 'rgb(255, 99, 132)',      borderColor: 'rgb(255, 99, 132)',      data: [0, 10, 5, 2, 20, 30, 45],    },{      label: 'Pressure Back',      backgroundColor: 'rgb(0, 99, 132)',      borderColor: 'rgb(0, 99, 132)',      data: [10, 5, 2, 20, 30, 45, 0],    }]  }
+					}else if (contentElem.ty == 'updateintervall') {
+						intervallSend = contentElem.value;
+						//console.log('Updateintervall: ' + intervallSend);
+					} else if (contentElem.ty == 'n') {
+						if (tempelement == null) {
+							
+						} else {
+							tempelement.remove();
+						}
+					} else {
+						console.log('Nicht bekannt: ' + contentElem);
+					}
+			}
+			//for (var elem in buttonSpace.children[0]) {
+			//	if
+			//}
+	}
+	
+	
+	function initJoystick(idJoy) {
+		console.log("init" + idJoy);
+		let canvas = document.getElementById('canvas' + idJoy);
+            let ctx = canvas.getContext('2d'); 
+			let sticki = {
+				canvas: canvas,
+				ctx: ctx,
+				width: 0,
+				height: 0,
+				radius: 0,
+				x_orig: 0,
+				y_orig: 0,
+				coord: { x: 0, y: 0 },
+				paint: false,
+				id: idJoy
+			}
+            resize(sticki); 
+			canvas.addEventListener('mousedown', function(event) {startDrawing(event, sticki);});
+			canvas.addEventListener('mouseup', function() {stopDrawing(sticki);});
+			canvas.addEventListener('mousemove', function(event) {Draw(event, sticki);});
+			canvas.addEventListener('mouseleave', function() {stopDrawing(sticki);});
+
+            canvas.addEventListener('touchstart', function(event) {startDrawing(event, sticki);});
+            canvas.addEventListener('touchend', function() {stopDrawing(sticki);});
+            canvas.addEventListener('touchcancel', function() {stopDrawing(sticki);});
+            canvas.addEventListener('touchmove', function(event) {Draw(event, sticki);});
+            //window.addEventListener('resize', function() {resize(sticki);});
+
+            document.getElementById("x_coordinate" + idJoy).innerText = 0;
+            document.getElementById("y_coordinate" + idJoy).innerText = 0;
+            document.getElementById("speed" + idJoy).innerText = 0;
+            document.getElementById("angle" + idJoy).innerText = 0;
+        }
+
+        function resize(tjoy) {
+			var rect = tjoy.canvas.parentElement.getBoundingClientRect();
+			//console.log(rect.right, rect.left, rect.right-rect.left);
+			tjoy.width = rect.right-rect.left;
+			tjoy.radius = tjoy.width/4.2;
+            tjoy.height = tjoy.radius * 4.2;
+            tjoy.ctx.canvas.width = tjoy.width;
+            tjoy.ctx.canvas.height = tjoy.height;
+            background(tjoy);
+            joystick(tjoy, tjoy.width / 2, tjoy.height / 2);
+        }
+
+        function background(tjoy) {
+            tjoy.x_orig = tjoy.width / 2;
+            tjoy.y_orig = tjoy.height / 2;
+            tjoy.ctx.beginPath();
+            tjoy.ctx.arc(tjoy.x_orig, tjoy.y_orig, tjoy.radius + (tjoy.radius*0.5), 0, Math.PI * 2, true);
+            tjoy.ctx.fillStyle = '#ECE5E5';
+            tjoy.ctx.fill();
+        }
+
+        function joystick(tjoy, width, height) {
+            tjoy.ctx.beginPath();
+            tjoy.ctx.arc(width, height, tjoy.radius, 0, Math.PI * 2, true);
+            tjoy.ctx.fillStyle = '#F08080';
+            tjoy.ctx.fill();
+            tjoy.ctx.strokeStyle = '#F6ABAB';
+            tjoy.ctx.lineWidth = 8;
+            tjoy.ctx.stroke();
+        }
+
+        function getPosition(event, tjoy) {
+			if (typeof event === 'undefined') {
+				return;
+			}
+			//console.log(event);
+			//console.log(tjoy.canvas);
+			var indexT = 0;
+			if (typeof event.touches === 'undefined') {
+			
+			}else {
+				for (var c = 0; c < event.touches.length; c++) {
+					if (event.touches[c].target.id == tjoy.canvas.id) {
+						indexT = c;
+					}
+				}
+			}
+            var mouse_x = event.clientX || event.touches[indexT].clientX;
+            var mouse_y = event.clientY || event.touches[indexT].clientY;
+			var rect = tjoy.canvas.getBoundingClientRect();
+            tjoy.coord.x = mouse_x-rect.left;
+            tjoy.coord.y = mouse_y-rect.top;
+			//console.log(tjoy.coord.x + " " + tjoy.coord.y)
+			//console.log(rect.top, rect.right, rect.bottom, rect.left);
+        }
+
+        function is_it_in_the_circle(tjoy) {
+            var current_radius = Math.sqrt(Math.pow(tjoy.coord.x - tjoy.x_orig, 2) + Math.pow(tjoy.coord.y - tjoy.y_orig, 2));
+            if (tjoy.radius >= current_radius) return true
+            else return false
+        }
+
+
+        function startDrawing(event, tjoy) {
+			//console.log(event);
+            tjoy.paint = true;
+            getPosition(event, tjoy);
+            if (is_it_in_the_circle(tjoy)) {
+                tjoy.ctx.clearRect(0, 0, tjoy.canvas.width, tjoy.canvas.height);
+                background(tjoy);
+                joystick(tjoy, tjoy.coord.x, tjoy.coord.y);
+                Draw(event, tjoy);
+            }
+        }
+
+
+        function stopDrawing(tjoy) {
+            tjoy.paint = false;
+            tjoy.ctx.clearRect(0, 0, tjoy.canvas.width, tjoy.canvas.height);
+            background(tjoy);
+            joystick(tjoy, tjoy.width / 2, tjoy.height / 2);
+            document.getElementById("x_coordinate" + tjoy.id).innerText = 0;
+            document.getElementById("y_coordinate" + tjoy.id).innerText = 0;
+            document.getElementById("speed" + tjoy.id).innerText = 0;
+            document.getElementById("angle" + tjoy.id).innerText = 0;
+
+        }
+
+        function Draw(event, tjoy) {
+            if (tjoy.paint) {
+                tjoy.ctx.clearRect(0, 0, tjoy.canvas.width, tjoy.canvas.height);
+                background(tjoy);
+                var angle_in_degrees,x, y, speed;
+                var angle = Math.atan2((tjoy.coord.y - tjoy.y_orig), (tjoy.coord.x - tjoy.x_orig));
+                if (Math.sign(angle) == -1) {
+                    angle_in_degrees = Math.round(-angle * 180 / Math.PI);
+                }
+                else {
+                    angle_in_degrees =Math.round( 360 - angle * 180 / Math.PI);
+                }
+                if (is_it_in_the_circle(tjoy)) {
+                    joystick(tjoy, tjoy.coord.x, tjoy.coord.y);
+                    x = tjoy.coord.x;
+                    y = tjoy.coord.y;
+                }
+                else {
+                    x = tjoy.radius * Math.cos(angle) + tjoy.x_orig;
+                    y = tjoy.radius * Math.sin(angle) + tjoy.y_orig;
+                    joystick(tjoy, x, y);
+                }
+                getPosition(event, tjoy);
+                var speed =  Math.round(100 * Math.sqrt(Math.pow(x - tjoy.x_orig, 2) + Math.pow(y - tjoy.y_orig, 2)) / tjoy.radius);
+                var x_relative = Math.round(x - tjoy.x_orig);
+                var y_relative = Math.round(y - tjoy.y_orig);
+				//TODO: x und y normieren
+                document.getElementById("x_coordinate" + tjoy.id).innerText =  x_relative;
+                document.getElementById("y_coordinate" + tjoy.id).innerText =y_relative ;
+                document.getElementById("speed" + tjoy.id).innerText = speed;
+                document.getElementById("angle" + tjoy.id).innerText = angle_in_degrees;
+				//console.log('{"type":"joy", "index":"'+tjoy.id+'", "value":['+x_relative+',' + y_relative + ',' + speed + ',' + angle_in_degrees +']}');
+				sendValues('{"' + tjoy.id + '":{"type":"joy", "index":"'+tjoy.id+'", "value":['+x_relative+',' + y_relative + ',' + speed + ',' + angle_in_degrees +']}}');
+				//sendValues({""+ tjoy.id + "":{"type":"joy", "index":tjoy.id, "value":[x_relative,y_relative,speed,angle_in_degrees]}});
+            }
+        }
+// Charts
+const configLine = {
+    type: 'line',
+    options: {
+		animation: false,
+		interaction: {
+		  mode: 'nearest',
+		  axis: 'x',
+		  intersect: false
+		},
+		elements: {
+            point: {
+                pointRadius: 0
+            }
+        },
+	}
+  };
+  
+  var charts = {};
+  
+  const configDoughnut = {
+    type: 'doughnut',
+  };
+  
+  
+  function addDataChart(chart, dataC) {
+	 dataC = dataC.replaceAll("'", "\"");
+	 //console.log(dataC);
+	 //dataC = "{labels: [22169],datasets: [{label: 'Pressure Front',backgroundColor: 'rgb(255, 99, 132)',borderColor: 'rgb(255, 99, 132)',data: [22,]},{label: 'Pressure Back',backgroundColor: 'rgb(0, 99, 132)',borderColor: 'rgb(0, 99, 132)',data: [22]}]}"
+	var dataCopy = JSON.parse(dataC);
+	//console.log(dataCopy);
+    const data = chart.data;
+	//console.log(chart);
+	
+	dataCopy.labels.forEach(element => data.labels.push(element));
+	
+	for (let index = 0; index < dataCopy.datasets.length; ++index) {
+		if (data.datasets[index] === undefined) {
+			data.datasets[index] = dataCopy.datasets[index];
+		} else {
+			data.datasets[index].label = dataCopy.datasets[index].label;
+			dataCopy.datasets[index].data.forEach(element => data.datasets[index].data.push(element));
+		}
+	}
+	for (let index = 0; index < dataCopy.datasets.length; ++index) {
+		while (data.datasets[0].data.length > 500) {
+			data.labels.shift();
+			for (let index = 0; index < data.datasets.length; ++index) {
+				data.datasets[index].data.shift();
+			}	
+		}
+	}
+	//console.log(chart.data);
+	chart.update();
+  }
+  </script>
+
+</body>
+</html>

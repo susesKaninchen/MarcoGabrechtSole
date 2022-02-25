@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        Mousebot
+    </title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<style>
+.buttonSpace {
+	background: #f2f4f8;
+	font-family: "Open Sans";
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-gap: 1rem;
+}
+
+@media screen and (max-width: 650px){
+    .buttonSpace{
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.yellow {
+  --bg-color: #ffd861;
+  --bg-color-light: #ffeeba;
+  --text-color-hover: #4C5656;
+  --box-shadow-color: rgba(255, 215, 97, 0.48);
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 14px 26px rgba(0,0,0,0.04);
+  transition: all 0.3s ease-out;
+  text-decoration: none;
+  object-fit: cover;
+  position: relative;
+}
+
+.card:active {
+  transform: scale(1) translateZ(0);
+  box-shadow: 0 15px 24px rgba(0,0,0,0.11),
+    0 15px 24px var(--box-shadow-color);
+}
+
+.card p {
+  font-size: 17px;
+  color: #4C5656;
+  z-index: 1000;
+  transition: color 0.3s ease-out;
+}
+
+.card:active .overlay {
+  transform: scale(4) translateZ(0);
+}
+
+.overlay {
+  width: 240px;
+  position: absolute; 
+  height: 118px;
+  border-radius: 10px;
+  background: var(--bg-color);
+  z-index: 0;
+  transition: transform 0.3s ease-out;
+}
+	
+.slidecontainer {text-align: center !important; }
+
+.slider {
+  -webkit-appearance: none;
+  width: 90%;
+  height: 25px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+
+.btn {
+  position: relative;
+  display: block;
+  margin: 20px 20px;
+  padding: 0;
+  overflow: hidden;
+  border-width: 0;
+  outline: none;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+  background-color: #2ecc71;
+  color: #ecf0f1;
+  transition: background-color .3s;
+}
+
+.btn:active {
+  background-color: #27ae60;
+}
+
+.btn > * {
+  position: relative;
+}
+
+.btn p {
+	text-align: center;
+  display: block;
+  padding: 20px 24px;
+}
+
+.btn:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 0;
+  padding-top: 0;
+  border-radius: 100%;
+  background-color: rgba(236, 240, 241, .3);
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.btn:active:before {
+  width: 120%;
+  padding-top: 120%;
+  transition: width .2s ease-out, padding-top .2s ease-out;
+}
+/* Styles, not important */
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+
+.close {
+  width: 25px;
+  height: 25px;
+  opacity: 0.3;
+}
+.close:hover {
+  opacity: 1;
+}
+.close:before, .close:after {
+  position: absolute;
+  left: 12px;
+  content: ' ';
+  height: 25px;
+  width: 2px;
+  background-color: #333;
+}
+.close:before {
+  transform: rotate(45deg);
+}
+.close:after {
+  transform: rotate(-45deg);
+}
+
+
+.btn-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: hsl(216, 100, 50);
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+body {
+	height: 100%;
+    touch-action: none;
+}
+#myChart {width: 100%; min-height: 100px;}
+#joyText {z-index: 2;position: absolute;top: 0px;pointer-events: none;}
+
+
+
+
+</style>
+<!--<script src="/chart.js"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+<body  style="position: fixed; color:rgb(128, 128, 128); font-size: xx-large;">
+<style>#i1 {grid-column: span 2; grid-row: span 2;}</style>
+<style>#i3 {grid-column: span 3; grid-row: span 2;}</style>
+<div class="buttonSpace" id="buttonSpace">
+<div class="card yellow" id="i8" >
+		<button class="btn" type="button" id="1" onclick="addDataChart(myChart, {labels: [1,2,3,4,5,6,7],datasets: [{label: 'Pressure Front',backgroundColor: 'rgb(255, 99, 132)',      borderColor: 'rgb(255, 99, 132)',      data: [0, 10, 5, 2, 20, 30, 45],    },{      label: 'Pressure Back',      backgroundColor: 'rgb(0, 99, 132)',      borderColor: 'rgb(0, 99, 132)',      data: [10, 5, 2, 20, 30, 45, 0],    }]  })">
+			<p>UPDATE</p>
+		</button>
+		<button type="button" class="btn-close" onclick="closePress(this.parentNode.id.substring(1))"><span class="close"></span></button>
+	</div>
+	<div class="card yellow" id="i0" >
+		<button class="btn" type="button" id="1" onclick="buttonPress(this.id)">
+			<p>UPDATE</p>
+		</button>
+		<button type="button" class="btn-close" onclick="closePress(this.parentNode.id.substring(1))"><span class="close"></span></button>
+	</div>
+	<div class="card yellow" id="i0" >
+		<button class="btn" type="button" id="2" onclick="buttonPress(this.id)">
+			<p>UPDATE</p>
+		</button>
+		<button type="button" class="btn-close" onclick="closePress(this.parentNode.id.substring(1))"><span class="close"></span></button>
+	</div>
+	<div class="card yellow" id="i1">
+    <p id="joyText" style="text-align: center;">
+        X: <span id="x_coordinate1"> </span>
+        Y: <span id="y_coordinate1"> </span><br>
+        Speed: <span id="speed1"> </span> %
+        Angle: <span id="angle1"> </span>
+    </p>
+    <canvas id="canvas1" name="game"></canvas>
+	</div>
+	<div class="card yellow" id="i2">
+    <p id="joyText" style="text-align: center;">
+        X: <span id="x_coordinate2"> </span>
+        Y: <span id="y_coordinate2"> </span><br>
+        Speed: <span id="speed2"> </span>%
+        Angle: <span id="angle2"> </span>
+    </p>
+    <canvas id="canvas2" name="game"></canvas>
+	</div>
+	<div class="card yellow" id="i3">
+		<canvas id="myChart"></canvas>
+	</div>
+	
+	
+</div>
+    
+    <script>
+
+  const datain = {labels: [8],datasets: [{label: 'Pressure Front',backgroundColor: 'rgb(255, 99, 132)',borderColor: 'rgb(255, 99, 132)',data: [45],},{label: 'Pressure Back',backgroundColor: 'rgb(0, 99, 132)',borderColor: 'rgb(0, 99, 132)',data: [0],}]};
+
+  const configLine = {
+    type: 'line',
+    options: {
+		animation: false,
+		interaction: {
+		  mode: 'nearest',
+		  axis: 'x',
+		  intersect: false
+		},
+		elements: {
+            point: {
+                pointRadius: 0
+            }
+        },
+	}
+  };
+  
+  const configDoughnut = {
+    type: 'doughnut',
+  };
+  
+  const myChart = new Chart(
+    document.getElementById('myChart'),
+    configLine
+  );
+  
+  function addDataChart(chart, dataC) {
+	var dataCopy = JSON.parse(JSON.stringify(dataC));
+    const data = chart.data;
+	dataCopy.labels.forEach(element => data.labels.push(element));
+	
+	for (let index = 0; index < dataCopy.datasets.length; ++index) {
+		if (data.datasets[index] === undefined) {
+			data.datasets[index] = dataCopy.datasets[index];
+		} else {
+			data.datasets[index].label = dataCopy.datasets[index].label;
+			dataCopy.datasets[index].data.forEach(element => data.datasets[index].data.push(element));
+		}
+	}
+	for (let index = 0; index < dataCopy.datasets.length; ++index) {
+		while (data.datasets[0].data.length > 500) {
+			data.labels.shift();
+			for (let index = 0; index < data.datasets.length; ++index) {
+				data.datasets[index].data.shift();
+			}	
+		}
+	}
+	//console.log(chart.data);
+	chart.update();
+  }
+  
+  function handlerh(chart) {
+      const data = chart.data;
+	  data.datasets = datain.datasets;
+	  for (var n = 0; n<1 ; n++) {
+      if (data.datasets.length > 0) {
+	  //console.log((data.datasets[0].data.length > 500));
+		if (data.datasets[0].data.length > 500) {
+			data.labels.shift();
+			for (let index = 0; index < data.datasets.length; ++index) {
+				data.datasets[index].data.shift();
+			}	
+		}
+		data.labels.push("marco");
+		for (let index = 0; index < data.datasets.length; ++index) {
+		  data.datasets[index].data.push(50);
+		}
+	  };
+		
+      }
+	  chart.update();
+    }
+  
+	function buttonPress(id) {
+
+            let canvas = document.getElementById('canvas' + id)
+            let ctx = canvas.getContext('2d'); 
+			let sticki = {
+				canvas: canvas,
+				ctx: ctx,
+				width: 0,
+				height: 0,
+				radius: 0,
+				x_orig: 0,
+				y_orig: 0,
+				coord: { x: 0, y: 0 },
+				paint: false,
+				id: id
+			}
+            resize(sticki); 
+			canvas.addEventListener('mousedown', function(event) {startDrawing(event, sticki);});
+			canvas.addEventListener('mouseup', function() {stopDrawing(sticki);});
+			canvas.addEventListener('mousemove', function(event) {Draw(event, sticki);});
+			canvas.addEventListener('mouseleave', function() {stopDrawing(sticki);});
+
+            canvas.addEventListener('touchstart', function(event) {startDrawing(event, sticki);});
+            canvas.addEventListener('touchend', function() {stopDrawing(sticki);});
+            canvas.addEventListener('touchcancel', function() {stopDrawing(sticki);});
+            canvas.addEventListener('touchmove', function(event) {Draw(event, sticki);});
+            window.addEventListener('resize', function() {resize(sticki);});
+
+            document.getElementById("x_coordinate" + id).innerText = 0;
+            document.getElementById("y_coordinate" + id).innerText = 0;
+            document.getElementById("speed" + id).innerText = 0;
+            document.getElementById("angle" + id).innerText = 0;
+        }
+
+        function resize(tjoy) {
+			var rect = tjoy.canvas.parentElement.getBoundingClientRect();
+			//console.log(rect.right, rect.left, rect.right-rect.left);
+			tjoy.width = rect.right-rect.left;
+			tjoy.radius = tjoy.width/4.2;
+            tjoy.height = tjoy.radius * 4.2;
+            tjoy.ctx.canvas.width = tjoy.width;
+            tjoy.ctx.canvas.height = tjoy.height;
+            background(tjoy);
+            joystick(tjoy, tjoy.width / 2, tjoy.height / 2);
+        }
+
+        function background(tjoy) {
+            tjoy.x_orig = tjoy.width / 2;
+            tjoy.y_orig = tjoy.height / 2;
+            tjoy.ctx.beginPath();
+            tjoy.ctx.arc(tjoy.x_orig, tjoy.y_orig, tjoy.radius + (tjoy.radius*0.5), 0, Math.PI * 2, true);
+            tjoy.ctx.fillStyle = '#ECE5E5';
+            tjoy.ctx.fill();
+        }
+
+        function joystick(tjoy, width, height) {
+            tjoy.ctx.beginPath();
+            tjoy.ctx.arc(width, height, tjoy.radius, 0, Math.PI * 2, true);
+            tjoy.ctx.fillStyle = '#F08080';
+            tjoy.ctx.fill();
+            tjoy.ctx.strokeStyle = '#F6ABAB';
+            tjoy.ctx.lineWidth = 8;
+            tjoy.ctx.stroke();
+        }
+
+        function getPosition(event, tjoy) {
+			if (typeof event === 'undefined') {
+				return;
+			}
+			//console.log(event);
+			//console.log(tjoy.canvas);
+			var indexT = 0;
+			for (var c = 0; c < event.touches.length; c++) {
+				if (event.touches[c].target.id == tjoy.canvas.id) {
+					indexT = c;
+				}
+			}
+            var mouse_x = event.clientX || event.touches[indexT].clientX;
+            var mouse_y = event.clientY || event.touches[indexT].clientY;
+			var rect = tjoy.canvas.getBoundingClientRect();
+            tjoy.coord.x = mouse_x-rect.left;
+            tjoy.coord.y = mouse_y-rect.top;
+			//console.log(tjoy.coord.x + " " + tjoy.coord.y)
+			//console.log(rect.top, rect.right, rect.bottom, rect.left);
+        }
+
+        function is_it_in_the_circle(tjoy) {
+            var current_radius = Math.sqrt(Math.pow(tjoy.coord.x - tjoy.x_orig, 2) + Math.pow(tjoy.coord.y - tjoy.y_orig, 2));
+            if (tjoy.radius >= current_radius) return true
+            else return false
+        }
+
+
+        function startDrawing(event, tjoy) {
+            tjoy.paint = true;
+            getPosition(event, tjoy);
+            if (is_it_in_the_circle(tjoy)) {
+                tjoy.ctx.clearRect(0, 0, tjoy.canvas.width, tjoy.canvas.height);
+                background(tjoy);
+                joystick(tjoy, tjoy.coord.x, tjoy.coord.y);
+                Draw(event, tjoy);
+            }
+        }
+
+
+        function stopDrawing(tjoy) {
+            tjoy.paint = false;
+            tjoy.ctx.clearRect(0, 0, tjoy.canvas.width, tjoy.canvas.height);
+            background(tjoy);
+            joystick(tjoy, tjoy.width / 2, tjoy.height / 2);
+            document.getElementById("x_coordinate" + tjoy.id).innerText = 0;
+            document.getElementById("y_coordinate" + tjoy.id).innerText = 0;
+            document.getElementById("speed" + tjoy.id).innerText = 0;
+            document.getElementById("angle" + tjoy.id).innerText = 0;
+
+        }
+
+        function Draw(event, tjoy) {
+            if (tjoy.paint) {
+                tjoy.ctx.clearRect(0, 0, tjoy.canvas.width, tjoy.canvas.height);
+                background(tjoy);
+                var angle_in_degrees,x, y, speed;
+                var angle = Math.atan2((tjoy.coord.y - tjoy.y_orig), (tjoy.coord.x - tjoy.x_orig));
+                if (Math.sign(angle) == -1) {
+                    angle_in_degrees = Math.round(-angle * 180 / Math.PI);
+                }
+                else {
+                    angle_in_degrees =Math.round( 360 - angle * 180 / Math.PI);
+                }
+                if (is_it_in_the_circle(tjoy)) {
+                    joystick(tjoy, tjoy.coord.x, tjoy.coord.y);
+                    x = tjoy.coord.x;
+                    y = tjoy.coord.y;
+                }
+                else {
+                    x = tjoy.radius * Math.cos(angle) + tjoy.x_orig;
+                    y = tjoy.radius * Math.sin(angle) + tjoy.y_orig;
+                    joystick(tjoy, x, y);
+                }
+                getPosition(event, tjoy);
+                var speed =  Math.round(100 * Math.sqrt(Math.pow(x - tjoy.x_orig, 2) + Math.pow(y - tjoy.y_orig, 2)) / tjoy.radius);
+                var x_relative = Math.round(x - tjoy.x_orig);
+                var y_relative = Math.round(y - tjoy.y_orig);
+                document.getElementById("x_coordinate" + tjoy.id).innerText =  x_relative;
+                document.getElementById("y_coordinate" + tjoy.id).innerText =y_relative ;
+                document.getElementById("speed" + tjoy.id).innerText = speed;
+                document.getElementById("angle" + tjoy.id).innerText = angle_in_degrees;
+            }
+        } 
+    </script>
+</body>
+</html>
